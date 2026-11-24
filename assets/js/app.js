@@ -135,12 +135,12 @@
     c.innerHTML =
       '<div class="card__img">' + pictureHtml(b.card, esc(b.name) + ' em Paraty', CARD_SIZES, b.cardPos) +
       (b.badge ? '<span class="badge' + (b.soon ? " badge--soon" : "") + '">' + esc(b.badge) + "</span>" : "") +
-      '<span class="card__code">' + esc(b.code) + "</span></div>" +
+      "</div>" +
       '<div class="card__body"><span class="card__kind">' + (b.kind === "jet" ? "Jet ski" : "Lancha") + "</span>" +
       "<h3>" + esc(b.name) + "</h3>" + (b.alias ? '<span class="card__alias">' + esc(b.alias) + "</span>" : "") +
       '<p class="card__tag">' + esc(b.tagline) + "</p>" +
-      '<div class="card__specs"><span class="spec">' + IC.pax + esc(specText(b)) + '</span><span class="spec">' + IC.eng + esc(b.motor.split("·")[0].trim()) + "</span></div>" +
-      '<div class="dots" title="Grupo de ' + b.cotas + ' cotistas">' + dotsHtml(b.cotas) + "<span>grupo de " + b.cotas + " cotistas</span></div>" +
+      '<div class="card__specs"><span class="spec">' + IC.pax + esc(specText(b)) + '</span><span class="spec">' + IC.eng + esc(b.motor.split("·")[0].trim()) + "</span>" + (b.year ? '<span class="spec">Ano ' + esc(b.year) + "</span>" : "") + "</div>" +
+      '<div class="dots" title="Você é 1 de ' + b.cotas + ' proprietários">' + dotsHtml(b.cotas) + "<span>você é 1 de " + b.cotas + " proprietários</span></div>" +
       '<span class="card__more">Ver ficha</span></div>';
     }
     c.addEventListener("click", function () { openSheet(b, c); });
@@ -215,9 +215,9 @@
     $$(".hslide", hs).forEach(function (el, k) { el.classList.toggle("is-on", k === i); });
     $$("button", hd).forEach(function (el, k) { el.classList.remove("is-on", "is-done"); if (k === i) el.setAttribute("aria-current", "true"); else el.removeAttribute("aria-current"); if (k < i) el.classList.add("is-done"); });
     var cur = $$("button", hd)[i]; void cur.offsetWidth; cur.classList.add("is-on");
-    $("#nowKind").textContent = (b.kind === "jet" ? "Jet ski" : "Lancha") + " · " + b.code;
+    $("#nowKind").textContent = (b.kind === "jet" ? "Jet ski" : "Lancha") + (b.year ? " · " + b.year : "");
     $("#nowName").textContent = b.name + (b.alias ? " · " + b.alias : "");
-    $("#nowSpec").textContent = b.paxDay + " pessoas" + (b.paxNight ? " · " + b.paxNight + " à noite" : "") + " · grupo de " + b.cotas;
+    $("#nowSpec").textContent = b.paxDay + " pessoas" + (b.paxNight ? " · " + b.paxNight + " à noite" : "") + " · 1 de " + b.cotas + " proprietários";
     scheduleHero();
   }
   if (hBtn) hBtn.addEventListener("click", function () {
@@ -244,16 +244,16 @@
   }
   function openSheet(b, trigger) {
     cur = b; lastFocus = trigger || null;
-    $("#sTag").textContent = (b.kind === "jet" ? "Jet ski" : "Lancha") + " · " + b.code + " · " + B.marina;
+    $("#sTag").textContent = (b.kind === "jet" ? "Jet ski" : "Lancha") + (b.year ? " " + b.year : "") + " · Marina " + B.marina;
     $("#sTitle").textContent = b.name;
     $("#sAlias").textContent = b.alias ? "“" + b.alias + "”" : "";
     $("#sTagline").textContent = b.tagline;
     $("#sSpecs").innerHTML =
-      "<div><dt>Passageiros</dt><dd>" + b.paxDay + " de dia" + (b.paxNight ? " · " + b.paxNight + " à noite" : " · sem pernoite") + "</dd></div>" +
+      "<div><dt>Passageiros</dt><dd>" + (b.paxNight ? b.paxDay + " de dia · " + b.paxNight + " à noite" : b.paxDay + " pessoas") + "</dd></div>" +
       "<div><dt>Motor</dt><dd>" + esc(b.motor) + "</dd></div>" +
       "<div><dt>Marina</dt><dd>" + esc(B.marina) + "</dd></div>" +
-      "<div><dt>Grupo</dt><dd>" + b.cotas + " cotas</dd></div>";
-    $("#sGroup").innerHTML = '<div class="dots">' + dotsHtml(b.cotas) + "</div><p>Você divide esta embarcação com mais " + (b.cotas - 1) + " cotistas.</p>";
+      (b.year ? "<div><dt>Ano</dt><dd>" + esc(b.year) + "</dd></div>" : "") + "<div><dt>Proprietários</dt><dd>" + b.cotas + " proprietários</dd></div>";
+    $("#sGroup").innerHTML = '<div class="dots">' + dotsHtml(b.cotas) + "</div><p>Você será um dos " + b.cotas + " proprietários desta embarcação. O uso e os custos são compartilhados entre os proprietários e a Boatlux administra tudo.</p>";
     $("#sItems").innerHTML = b.items.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("");
     sThumbs.innerHTML = "";
     b.gallery.forEach(function (src, i) {
@@ -312,6 +312,9 @@
     return 2 * R * Math.asin(Math.sqrt(a));
   }
   function fmt(n) { return n.toFixed(1).replace(".", ","); }
+  // distância APROXIMADA: arredonda para 0,5 km e para milhas inteiras
+  function approx(km) { var k = Math.max(0.5, Math.round(km * 2) / 2); return "≈ " + (k % 1 ? fmt(k) : String(k)) + " km"; }
+  function approxMn(km) { return "≈ " + Math.max(1, Math.round(km / 1.852)) + " mn"; }
   var RED = "#C23B33", INK = "#2c2a26";
 
   svg.setAttribute("role", "group"); svg.setAttribute("viewBox", "0 0 " + VW + " " + VH); svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
@@ -371,6 +374,14 @@
   nameLabel("Serra do Mar", 330, 640, "#7a5a24", 20, -12, "0.28em");
   nameLabel("Península da Juatinga", 840, 650, "#7a5a24", 17, -16, "0.2em");
 
+  // contornos dos itens marcados: ilhas = contorno real; demais = zona aproximada
+  var contourG = mk("g", {}, svg), contours = {};
+  Object.keys(MP.contours || {}).forEach(function (k) {
+    var c = MP.contours[k];
+    contours[k] = mk("path", { d: c.d, fill: "rgba(194,59,51,.10)", stroke: RED, "stroke-linejoin": "round", "stroke-linecap": "round", "stroke-dasharray": c.t === "zona" ? "6 5" : "none", opacity: .32, "pointer-events": "none" }, contourG);
+    contours[k].dataset.t = c.t;
+  });
+
   // marcos
   var pinG = mk("g", {}, svg), pins = {}, labels = [], radii = [];
   var cp = P.centro, cg = mk("g", {}, pinG);
@@ -398,6 +409,7 @@
   });
   var routeL = mk("line", { stroke: RED, "stroke-dasharray": "2 7", "stroke-linecap": "round", opacity: 0 }, svg);
   svg.insertBefore(routeL, pinG);
+  var distLbl = mk("text", { "text-anchor": "middle", fill: RED, "font-family": "Jost, sans-serif", "font-weight": 600, stroke: "#fff", "paint-order": "stroke", "stroke-linejoin": "round", opacity: 0, "pointer-events": "none" }, svg);
 
   // escala (2 km)
   var kmU = VW / (Math.abs(G.LON1 - G.LON0) * 111.32 * Math.cos(23.24 * Math.PI / 180));
@@ -415,6 +427,8 @@
     for (var id in pins) { var pn = pins[id]; pn.c.setAttribute("stroke-width", (2 * u).toFixed(2)); pn.pulse.setAttribute("r", (13 * u).toFixed(2)); pn.pulse.setAttribute("stroke-width", (1.6 * u).toFixed(2)); }
     glabels.forEach(function (g) { g.el.setAttribute("font-size", (11 * u).toFixed(2)); if (g.kind === "lon") { g.el.setAttribute("x", g.v); g.el.setAttribute("y", v.y + 14 * u); } else { g.el.setAttribute("x", v.x + 6 * u); g.el.setAttribute("y", g.v - 4 * u); } });
     grid.setAttribute("stroke-width", (0.8 * u).toFixed(2));
+    for (var ck in contours) { var cel = contours[ck], isCur = cel.getAttribute("data-cur") === "1"; cel.setAttribute("stroke-width", ((isCur ? 2.6 : 1.9) * u).toFixed(2)); if (cel.dataset.t === "zona") cel.setAttribute("stroke-dasharray", (6 * u) + " " + (5 * u)); }
+    distLbl.setAttribute("font-size", (13 * u).toFixed(2)); distLbl.setAttribute("stroke-width", (4.5 * u).toFixed(2));
     routeL.setAttribute("stroke-width", (3 * u).toFixed(2)); routeL.setAttribute("stroke-dasharray", (2 * u) + " " + (7 * u));
     var px = v.x + 26 * u, py = v.y + v.h - 24 * u, len = kmU * 2;
     sl.setAttribute("x1", px); sl.setAttribute("x2", px + len); sl.setAttribute("y1", py); sl.setAttribute("y2", py); sl.setAttribute("stroke-width", 2.4 * u);
@@ -439,7 +453,7 @@
       el.className = "mstep"; el.dataset.i = i;
       el.innerHTML = '<span class="mstep__n">' + String(i + 1).padStart(2, "0") + "</span>" +
         '<span class="mstep__tag">' + esc(d.tag) + "</span><h3>" + esc(d.name) + "</h3><p>" + esc(d.text) + "</p>" +
-        '<span class="mstep__d">' + (i === 0 ? "Ponto de partida" : "≈ " + fmt(km) + " km · " + fmt(km / 1.852) + " mn em linha reta") + "</span>";
+        '<span class="mstep__d">' + (i === 0 ? "Ponto de partida" : "Distância aprox.: " + approx(km).replace("≈ ", "") + " · " + approxMn(km).replace("≈ ", "") + " em linha reta") + "</span>";
       stepsEl.appendChild(el);
     }
     d.km = km;
@@ -451,9 +465,11 @@
     for (var id in pins) { var on = id === d.id; pins[id].pulse.setAttribute("opacity", on ? 1 : 0); pins[id].c.setAttribute("fill", on ? "#66C8F5" : (id === "farol" ? RED : "#0A2350")); pins[id].n.setAttribute("fill", on ? "#0A2350" : "#fff"); }
     $("#mapN").textContent = String(i + 1).padStart(2, "0") + " / " + String(DEST.length).padStart(2, "0");
     $("#mapName").textContent = d.name;
-    $("#mapDist").textContent = i === 0 ? "Ponto de partida" : "≈ " + fmt(d.km) + " km em linha reta";
-    if (i === 0) { routeL.setAttribute("opacity", 0); }
-    else { routeL.setAttribute("x1", home.x); routeL.setAttribute("y1", home.y); routeL.setAttribute("x2", d.x); routeL.setAttribute("y2", d.y); routeL.setAttribute("opacity", .9); }
+    $("#mapDist").textContent = i === 0 ? "Ponto de partida" : "Distância aprox.: " + approx(d.km).replace("≈ ", "") + " em linha reta";
+    for (var ck2 in contours) { var on2 = ck2 === d.id; contours[ck2].setAttribute("data-cur", on2 ? "1" : "0"); contours[ck2].setAttribute("opacity", i === 0 ? .8 : (on2 ? 1 : .22)); contours[ck2].setAttribute("fill", on2 ? "rgba(194,59,51,.20)" : "rgba(194,59,51,.08)"); }
+    if (i === 0) { routeL.setAttribute("opacity", 0); distLbl.setAttribute("opacity", 0); }
+    else { distLbl.textContent = approx(d.km).replace("≈ ", "") + " aprox."; distLbl.setAttribute("x", (home.x + d.x) / 2); distLbl.setAttribute("y", (home.y + d.y) / 2 - 8); distLbl.setAttribute("opacity", 1);
+      routeL.setAttribute("x1", home.x); routeL.setAttribute("y1", home.y); routeL.setAttribute("x2", d.x); routeL.setAttribute("y2", d.y); routeL.setAttribute("opacity", .9); }
     var target;
     if (i === 0) { target = fit(VW * 0.5, VH * 0.5, VW); }
     else { var mx = (home.x + d.x) / 2, my = (home.y + d.y) / 2, span = Math.max(Math.abs(home.x - d.x), Math.abs(home.y - d.y) * aspect()); target = fit(mx, my, clamp(span * 1.9, 330, VW)); }
@@ -478,7 +494,7 @@
     ["assets/img/m/conquest-180-1.jpg", "Conquest 180 Open ancorada", 1.333],
     ["assets/img/m/solara-410-3.jpg", "Solara 410 HT na marina, fim de tarde", 0.75],
     ["assets/img/m/paraty-lugar-2.jpg", "Escunas e saveiros ancorados na baía", 1.501],
-    ["assets/img/m/gtx-300-5.jpg", "Silver Shark J4 em contraluz", 1.501],
+    ["assets/img/m/gtx-300-5.jpg", "Sea-Doo GTX 300 em contraluz", 1.501],
     ["assets/img/m/paraty-vida-1.jpg", "Jet ski ao pôr do sol", 0.666]
   ];
   var strip = $("#strip");
